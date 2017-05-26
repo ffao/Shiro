@@ -860,7 +860,7 @@ function createNewGame(seed) {
 
   var ret = "";
   // one extra for one of the teams
-  if (Math.floor(Math.random() * 2000) % 2 === 0) {
+  if (Math.floor(Math.random() * 980) % 2 === 0) {
     ret = COLOR_RED + ",";
     teams.push(COLOR_RED);
   } else {
