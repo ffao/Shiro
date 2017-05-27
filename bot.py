@@ -34,7 +34,7 @@ def main():
     init('0')
 
     host_id = 'stackexchange.com'
-    room_id = '59287'  # Sandbox
+    room_id = '59120'  # Sandbox
 
     if 'ChatExchangeU' in os.environ:
         email = os.environ['ChatExchangeU']
