@@ -50,7 +50,8 @@ def main():
 
     client.logout()
 
-TRUSTED_USER_IDS = [200996, 209507, 238144, 263999, 156773, 69330, 190748, 155240, 56166, 251910, 17335, 240387, 21351]
+TRUSTED_USER_IDS = [200996, 209507, 238144, 263999, 156773, 69330, 190748, 155240, 56166, 251910, 17335, 240387, 21351] #254945 would be a good addition
+passphrases = ["[passing]","[pass]"] #stuff that indicates somebody is passing
 
 def on_message(message, client):
     global shutdown
@@ -63,11 +64,14 @@ def on_message(message, client):
     print("")
     #print(">> (%s / %s) %s" % (message.user.name, repr(message.user.id), message.content))
 
-    pat = re.compile("(guess)?:?\s*<b>(.*)</b>\s*", re.IGNORECASE)
+    pat = re.compile(".*<b>(.*)</b>.*", re.IGNORECASE)
     m = re.match(pat, message.content)
     if m is not None:
-        guess = m.groups()[1].strip()
-        guessed.append( guess.lower() )
+        guess = m.groups()[0].strip().lower()
+        if guess in passphrases:
+            show_board()
+        else:
+            guessed.append( guess )
 
     if is_trusted_user and message.content.lower().strip() == "!board":
         show_board()
