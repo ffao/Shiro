@@ -12,9 +12,12 @@ import re
 import sys
 import os
 import time
+import puush
 
 import requests
 from requests.auth import HTTPBasicAuth
+
+imagehost = 'puush'
 
 guessed = []
 board = []
@@ -28,6 +31,12 @@ if 'OTS_Password' in os.environ:
     OTS_Password = os.environ['OTS_Password']
 else:
     OTS_Password = raw_input("OTS Password: ")
+
+if 'Puush_API_Key' in os.environ:
+    Puush_API_Key = os.environ['Puush_API_Key']
+else:
+    Puush_API_Key = raw_input("Puush API Key: ")
+
 
 def main():
     global room
@@ -91,6 +100,9 @@ def on_message(message, client):
     if is_trusted_user and message.content.lower().startswith("!newgame"):
         new_game(message.content)
 
+    if is_super_user and message.content.lower().startswith("!imagehost"):
+        change_host(message.content)
+
     if is_trusted_user and message.content.lower().startswith("!seed"):
         try:
             new_seed = message.content[6:]
@@ -101,6 +113,14 @@ def on_message(message, client):
 
     if is_super_user and message.content.lower().strip() == "!shutdown":
         shutdown = True
+
+def change_host(msg):
+    global imagehost
+
+    pieces = msg.lower.split()
+    if len(pieces) >= 2:
+        new_host = pieces[1].strip()
+        if new_host in ['imgur', 'puush']: imagehost = new_host
 
 def new_game(msg):
     players = None
@@ -213,9 +233,23 @@ def draw_grid(seed, solved):
     return output.getvalue()
 
 def upload_image(im):
+    if imagehost == 'imgur':
+        return upload_imgur(im)
+
+    elif imagehost == 'puush':
+        return upload_puush(im)
+
+def upload_imgur(im):
     data = urllib.urlencode([('image', im)])
     req = urllib2.Request('https://api.imgur.com/3/image', data=data, headers={"Authorization": "Client-ID 44c2dcd61ab0bb9"})
     return json.loads(urllib2.urlopen(req).read())["data"]["link"]
+
+def upload_puush(im):
+    im = StringIO.StringIO(im)
+    im.name = 'temp.png'
+    account = puush.Account(Puush_API_Key)
+    f = account.upload(im)
+    return f.url
 
 def submit_secret(secret):
     data = {'secret': secret}
