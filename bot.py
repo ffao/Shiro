@@ -117,7 +117,7 @@ def on_message(message, client):
 def change_host(msg):
     global imagehost
 
-    pieces = msg.lower.split()
+    pieces = msg.lower().split()
     if len(pieces) >= 2:
         new_host = pieces[1].strip()
         if new_host in ['imgur', 'puush']: imagehost = new_host
