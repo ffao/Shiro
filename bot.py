@@ -12,6 +12,12 @@ import re
 import sys
 import os
 import time
+import puush
+
+import requests
+from requests.auth import HTTPBasicAuth
+
+imagehost = 'puush'
 
 guessed = []
 board = []
@@ -19,6 +25,18 @@ ctxt = PyV8.JSContext()
 ctxt.enter()
 ctxt.eval(open("boardgen.js").read())
 shutdown = False
+
+OTS_User = 'zaroogous@safetymail.info'
+if 'OTS_Password' in os.environ:
+    OTS_Password = os.environ['OTS_Password']
+else:
+    OTS_Password = raw_input("OTS Password: ")
+
+if 'Puush_API_Key' in os.environ:
+    Puush_API_Key = os.environ['Puush_API_Key']
+else:
+    Puush_API_Key = raw_input("Puush API Key: ")
+
 
 def main():
     global room
@@ -50,8 +68,8 @@ def main():
 
     client.logout()
 
-TRUSTED_USER_IDS = [200996, 209507, 238144, 263999, 156773, 69330, 190748, 155240, 56166, 251910, 17335, 240387, 21351] #254945 would be a good addition
 passphrases = ["[passing]","[pass]"] #stuff that indicates somebody is passing
+TRUSTED_USER_IDS = [200996, 233269, 209507, 238144, 263999, 156773, 69330, 190748, 155240, 56166, 251910, 17335, 240387, 21351, 188759, 174589, 254945, 152262]
 
 def on_message(message, client):
     global shutdown
@@ -60,11 +78,12 @@ def on_message(message, client):
         return
 
     is_trusted_user = (message.user.id in TRUSTED_USER_IDS)
+    is_super_user = (message.user.id == 200996 or message.user.is_moderator)
 
     print("")
     #print(">> (%s / %s) %s" % (message.user.name, repr(message.user.id), message.content))
 
-    pat = re.compile(".*<b>(.*)</b>.*", re.IGNORECASE)
+    pat = re.compile("\s*<b>(.*)</b>\s*", re.IGNORECASE)
     m = re.match(pat, message.content)
     if m is not None:
         guess = m.groups()[0].strip().lower()
@@ -76,11 +95,17 @@ def on_message(message, client):
     if is_trusted_user and message.content.lower().strip() == "!board":
         show_board()
 
-    if message.content.lower().strip() == "!undo":
+    if is_trusted_user and message.content.lower().strip() == "!undo":
         guessed.pop()
+
+    if is_trusted_user and message.content.lower().strip() == "!recall":
+        recall()
 
     if is_trusted_user and message.content.lower().startswith("!newgame"):
         new_game(message.content)
+
+    if is_super_user and message.content.lower().startswith("!imagehost"):
+        change_host(message.content)
 
     if is_trusted_user and message.content.lower().startswith("!seed"):
         try:
@@ -90,55 +115,67 @@ def on_message(message, client):
         except:
             pass
 
-    if is_trusted_user and message.content.lower().strip() == "!shutdown":
+    if is_super_user and message.content.lower().strip() == "!shutdown":
         shutdown = True
 
+def change_host(msg):
+    global imagehost
+
+    pieces = msg.lower().split()
+    if len(pieces) >= 2:
+        new_host = pieces[1].strip()
+        if new_host in ['imgur', 'puush']: imagehost = new_host
+
 def new_game(msg):
+    players = None
+
     try:
         players = [x.strip() for x in msg[8:].split(",")]
     except Exception, e:
-        print e
         return
 
     print "players: ", players
-    if len(players) < 4:
-        return
+    if players is not None and len(players) >= 4:
+        spymasters = players[:2]
+        random.shuffle(spymasters)
 
-    spymasters = players[:2]
-    random.shuffle(spymasters)
+        red = [spymasters[0]]
+        blue = [spymasters[1]]
 
-    red = [spymasters[0]]
-    blue = [spymasters[1]]
+        players = players[2:]
+        n = len(players) / 2
+        for x in xrange(n):
+            who = random.randrange(len(players))
+            red.append(players.pop(who))
+        for x in xrange(n):
+            who = random.randrange(len(players))
+            blue.append(players.pop(who))   
 
-    players = players[2:]
-    n = len(players) / 2
-    for x in xrange(n):
-        who = random.randrange(len(players))
-        red.append(players.pop(who))
-    for x in xrange(n):
-        who = random.randrange(len(players))
-        blue.append(players.pop(who))   
+        if players:
+            if random.randrange(2) == 0: 
+                red.append(players[0])
+            else: 
+                blue.append(players[0])
 
-    if players:
-        if random.randrange(2) == 0: 
-            red.append(players[0])
-        else: 
-            blue.append(players[0])
+        room.send_message("**RED**: *%s*, %s" % (red[0], ', '.join(red[1:])))
+        room.send_message("**BLUE**: *%s*, %s" % (blue[0], ', '.join(blue[1:])))
+        time.sleep(2)
 
     seed = str(random.randint(1, 1000000000))
     print 'everything is done'
 
-    my_message = '''Suggested teams:
-RED: %s
-BLUE: %s
+    my_message = '''RED spymaster only, please click on this link to see the seed: %s
+BLUE spymaster only, please click on this link to see the seed: %s
 
-Suggested seed: %s'''
+Please save the seed somewhere! As a last resort if any of you happens to forget the seed, you can type !recall to get a new link.'''
 
-    room.send_message(my_message % (', '.join(red), ', '.join(blue), seed))
+    room.send_message(my_message % (submit_secret(seed), submit_secret(seed)))
 
     init(seed)  
     show_board()
 
+def recall():
+    room.send_message("To view the current seed, click this link: %s" % submit_secret(seed))
 
 def init(_seed):
     global seed, guessed, board
@@ -200,9 +237,28 @@ def draw_grid(seed, solved):
     return output.getvalue()
 
 def upload_image(im):
+    if imagehost == 'imgur':
+        return upload_imgur(im)
+
+    elif imagehost == 'puush':
+        return upload_puush(im)
+
+def upload_imgur(im):
     data = urllib.urlencode([('image', im)])
     req = urllib2.Request('https://api.imgur.com/3/image', data=data, headers={"Authorization": "Client-ID 44c2dcd61ab0bb9"})
     return json.loads(urllib2.urlopen(req).read())["data"]["link"]
+
+def upload_puush(im):
+    im = StringIO.StringIO(im)
+    im.name = 'temp.png'
+    account = puush.Account(Puush_API_Key)
+    f = account.upload(im)
+    return f.url
+
+def submit_secret(secret):
+    data = {'secret': secret}
+    r = requests.post('https://onetimesecret.com/api/v1/share', data=data, auth=HTTPBasicAuth(OTS_User, OTS_Password))
+    return 'https://onetimesecret.com/secret/' + r.json()['secret_key']
 
 main()
 
