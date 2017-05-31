@@ -5,6 +5,7 @@ import StringIO
 import urllib2, urllib
 import json
 import random
+import traceback
 
 import chatexchange.client
 import chatexchange.events
@@ -80,43 +81,48 @@ def on_message(message, client):
     is_trusted_user = (message.user.id in TRUSTED_USER_IDS)
     is_super_user = (message.user.id == 200996 or message.user.is_moderator)
 
-    print("")
+    #print("")
     #print(">> (%s / %s) %s" % (message.user.name, repr(message.user.id), message.content))
 
-    pat = re.compile("\s*<b>(.*)</b>\s*", re.IGNORECASE)
-    m = re.match(pat, message.content)
-    if m is not None:
-        guess = m.groups()[0].strip().lower()
-        if guess in passphrases:
+    try:
+        pat = re.compile("\s*<b>(.*)</b>\s*", re.IGNORECASE)
+        m = re.match(pat, message.content)
+        if m is not None:
+            guess = m.groups()[0].strip().lower()
+            if guess in passphrases:
+                show_board()
+            else:
+                guessed.append( guess )
+
+        if is_trusted_user and message.content.lower().strip() == "!board":
             show_board()
-        else:
-            guessed.append( guess )
 
-    if is_trusted_user and message.content.lower().strip() == "!board":
-        show_board()
+        if is_trusted_user and message.content.lower().strip() == "!undo":
+            guessed.pop()
 
-    if is_trusted_user and message.content.lower().strip() == "!undo":
-        guessed.pop()
+        if is_trusted_user and message.content.lower().strip() == "!recall":
+            recall()
 
-    if is_trusted_user and message.content.lower().strip() == "!recall":
-        recall()
+        if is_trusted_user and message.content.lower().startswith("!newgame"):
+            new_game(message.content)
 
-    if is_trusted_user and message.content.lower().startswith("!newgame"):
-        new_game(message.content)
+        if is_super_user and message.content.lower().startswith("!imagehost"):
+            change_host(message.content)
 
-    if is_super_user and message.content.lower().startswith("!imagehost"):
-        change_host(message.content)
+        if is_trusted_user and message.content.lower().startswith("!seed"):
+            try:
+                new_seed = message.content[6:]
+                init(new_seed)
+                show_board()
+            except:
+                pass
 
-    if is_trusted_user and message.content.lower().startswith("!seed"):
-        try:
-            new_seed = message.content[6:]
-            init(new_seed)
-            show_board()
-        except:
-            pass
+        if is_super_user and message.content.lower().strip() == "!shutdown":
+            shutdown = True
 
-    if is_super_user and message.content.lower().strip() == "!shutdown":
-        shutdown = True
+    except:
+        traceback.print_exc()
+        print ""
 
 def change_host(msg):
     global imagehost
