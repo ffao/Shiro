@@ -197,7 +197,11 @@ Please save the seed somewhere! As a last resort if any of you happens to forget
 
     room.send_message(my_message % (submit_secret(seed), submit_secret(seed)))
 
-    init(seed)  
+    init(seed)
+    if board[0]=="#00eeee":
+        room.send_message("BLUE goes first!")
+    elif board[0]=="#ff0000":
+        room.send_message("RED goes first!")
     show_board()
 
 def recall():
@@ -297,4 +301,3 @@ def submit_secret(secret):
     return 'https://onetimesecret.com/secret/' + r.json()['secret_key']
 
 main()
-
