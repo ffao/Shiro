@@ -111,6 +111,9 @@ def on_message(message, client):
         if is_trusted_user and message.content.lower().strip() == "!undo":
             guessed.pop()
 
+        if is_trusted_user and message.content.lower().strip() == "!flipcoin":
+            flip_coin()
+
         if is_trusted_user and message.content.lower().strip() == "!recall":
             recall()
 
@@ -134,6 +137,9 @@ def on_message(message, client):
     except:
         traceback.print_exc()
         print ""
+
+def flip_coin():
+    room.send_message(random.choice(["Red", "Blue"]))
 
 def change_host(msg):
     global imagehost
