@@ -72,6 +72,17 @@ def main():
 passphrases = ["[passing]","[pass]"] #stuff that indicates somebody is passing
 TRUSTED_USER_IDS = [200996, 233269, 209507, 238144, 263999, 156773, 69330, 190748, 155240, 56166, 251910, 17335, 240387, 21351, 188759, 174589, 254945, 152262]
 
+def cooldown(seconds):
+    def inner(fn):
+        def ret_fn(*args, **kwargs):
+            if time.time() > ret_fn.last_time_stamp + seconds:
+                fn(*args, **kwargs)
+                ret_fn.last_time_stamp = time.time()
+
+        ret_fn.last_time_stamp = 0
+        return ret_fn
+    return inner
+
 def on_message(message, client):
     global shutdown
     if not isinstance(message, chatexchange.events.MessagePosted):
@@ -189,6 +200,7 @@ def init(_seed):
     guessed = []
     board = get_board(seed)
 
+@cooldown(10)
 def show_board():
     solved = []
     for idx, x in enumerate(board[1]):
