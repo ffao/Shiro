@@ -251,13 +251,27 @@ def draw_grid(seed, solved):
     font = ImageFont.truetype("ariblk.ttf", 12)
     image1 = Image.new("RGB", (WIDTH, HEIGHT), (255, 255, 255) )
     draw = ImageDraw.Draw(image1)
-
+    
+    blues = 0 #number of blues guessed
+    reds = 0  #number of reds guessed
     #print board
     for x in xrange(5):
         for y in xrange(5):
             if x*5+y in solved:
                 #print 'color: ', board[2][x*5+y]
                 draw.rectangle([x*GRID_WIDTH, y*GRID_HEIGHT, (x+1)*GRID_WIDTH, (y+1)*GRID_HEIGHT], fill=board[2][x*5+y])
+                if board[2][x*5+y]=="#00eeee":
+                    blues+=1
+                if board[2][x*5+y]=="#ff0000":
+                    reds+=1
+    
+    bluesremaining = 8-blues
+    redsremaining = 8-reds
+    if board[0] == "#00eeee":
+        bluesremaining += 1
+    else:
+        redsremaining += 1
+    #I'm not 100% confident with the draw tools so somebody else can do them if they want
 
     for x in xrange(GRID_WIDTH, WIDTH, GRID_WIDTH):
         draw.line([x, 0, x, HEIGHT], (0,0,0))
