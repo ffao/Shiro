@@ -119,6 +119,9 @@ def on_message(message, client):
 
         if is_trusted_user and message.content.lower().startswith("!newgame"):
             new_game(message.content)
+        
+        if is_trusted_user and message.content.lower().strip() == "!finalboard":
+            show_final()
 
         if is_super_user and message.content.lower().startswith("!imagehost"):
             change_host(message.content)
@@ -212,7 +215,16 @@ def show_board():
     for idx, x in enumerate(board[1]):
         if x.lower().strip() in guessed:
             solved.append(idx)
+    print 'drawing grid'
+    im = draw_grid(seed, solved)
+    print 'sending message'
+    time.sleep(3)
+    room.send_message( upload_image(im) )
 
+def show_final():
+    solved = []
+    for idx, x in enumerate(board[1]):
+        solved.append(idx)
     print 'drawing grid'
     im = draw_grid(seed, solved)
     print 'sending message'
