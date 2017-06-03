@@ -1,5 +1,5 @@
 # Shiro
-Helper bot for games in puzzling.stackexchange.com chat
+Helper bot for Codenames in the [StackExchange chatroom](https://chat.stackexchange.com/rooms/59120/codenames) for it
 
 ## How to run
 
