@@ -196,13 +196,13 @@ def new_game(msg):
             red.append(players.pop(who))
         for x in xrange(n):
             who = random.randrange(len(players))
-            blue.append(players.pop(who))   
+            blue.append(players.pop(who))
 
         if players:
-            if random.randrange(2) == 0: 
-                red.append(players[0])
-            else: 
+            if random.randrange(2):
                 blue.append(players[0])
+            else:
+                red.append(players[0])
 
         room.send_message("**RED**: *%s*, %s" % (red[0], ', '.join(red[1:])))
         room.send_message("**BLUE**: *%s*, %s" % (blue[0], ', '.join(blue[1:])))
