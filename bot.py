@@ -304,9 +304,12 @@ def show_board():
     room.send_message( upload_image(im) )
 
 def show_final():
+    solved = range(25)
+    '''Past code, in case this doesn't work for some reason:
     solved = []
     for idx, x in enumerate(board[1]):
         solved.append(idx)
+        '''
     print 'drawing grid'
     im = draw_grid(seed, solved)
     print 'sending message'
