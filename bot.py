@@ -38,6 +38,10 @@ if 'Puush_API_Key' in os.environ:
 else:
     Puush_API_Key = raw_input("Puush API Key: ")
 
+pinned_message_blue = None
+pinned_message_red = None
+blue = []
+red = []
 
 def main():
     global room
@@ -89,8 +93,9 @@ def on_message(message, client):
         # Ignore non-message_posted events.
         return
 
-    is_trusted_user = (message.user.id in TRUSTED_USER_IDS)
+    is_shiro = (message.user.id == 285026)
     is_super_user = (message.user.id == 200996 or message.user.is_moderator)
+    is_trusted_user = (message.user.id in TRUSTED_USER_IDS or is_super_user)
 
     #print("")
     #print(">> (%s / %s) %s" % (message.user.name, repr(message.user.id), message.content))
@@ -105,6 +110,12 @@ def on_message(message, client):
             else:
                 guessed.append( guess )
 
+        if is_shiro and message.content.strip().startswith("<b>RED</b>:"):
+            pin_red(message.message)
+
+        if is_shiro and message.content.strip().startswith("<b>BLUE</b>:"):
+            pin_blue(message.message) 
+
         if is_trusted_user and message.content.lower().strip() == "!board":
             show_board()
 
@@ -116,6 +127,12 @@ def on_message(message, client):
 
         if is_trusted_user and message.content.lower().strip() == "!recall":
             recall()
+
+        if is_trusted_user and message.content.lower().startswith("!join"):
+            add_user(message.content, message.user.name)
+
+        if is_trusted_user and message.content.lower().startswith("!leave"):
+            remove_user(message.content, message.user.name)
 
         if is_trusted_user and message.content.lower().startswith("!newgame"):
             new_game(message.content)
@@ -153,12 +170,16 @@ def change_host(msg):
         if new_host in ['imgur', 'puush']: imagehost = new_host
 
 def new_game(msg):
+    global red, blue
     players = None
 
     try:
         players = [x.strip() for x in msg[8:].split(",")]
     except Exception, e:
         return
+
+    red = []
+    blue = []
 
     print "players: ", players
     if players is not None and len(players) >= 4:
@@ -203,6 +224,63 @@ Please save the seed somewhere! As a last resort if any of you happens to forget
     elif board[0]=="#ff0000":
         room.send_message("RED goes first!")
     show_board()
+
+
+def add_user(content, name):
+    global red, blue
+
+    if not red or not blue:
+        room.send_message("Sorry, I don't have any teams stored right now!")
+        return
+
+    segments = content.strip().split(None, 1)
+    if len(segments) == 1:
+        joining_user = name
+    else:
+        joining_user = segments[1]
+
+    dest_color = ''
+    if content.lower().strip().startswith("!joinred"):
+        dest_color = 'red'
+    elif content.lower().strip().startswith("!joinblue"):
+        dest_color = 'blue'
+    else:
+        if len(red) != len(blue):
+            dest_color = 'red' if len(red) < len(blue) else 'blue'
+        else:
+            dest_color = random.choice(['red', 'blue'])
+        room.send_message("Hi %s, you'll be joining team %s!" % (joining_user, dest_color))
+
+    if dest_color == 'red':
+        red.append(joining_user)
+        room.send_message("**RED**: *%s*, %s" % (red[0], ', '.join(red[1:])))
+    else:
+        blue.append(joining_user)
+        room.send_message("**BLUE**: *%s*, %s" % (blue[0], ', '.join(blue[1:])))
+
+def remove_user(content, name):
+    global red, blue
+
+    if not red or not blue:
+        room.send_message("Sorry, I don't have any teams stored right now!")
+        return
+
+    segments = content.strip().split(None, 1)
+    if len(segments) == 1:
+        joining_user = name
+    else:
+        joining_user = segments[1]
+
+    if name in red[1:]:
+        red.reverse()
+        red.remove(name)
+        red.reverse()
+        room.send_message("**RED**: *%s*, %s" % (red[0], ', '.join(red[1:])))
+    if name in blue[1:]:
+        blue.reverse()
+        blue.remove(name)
+        blue.reverse()
+        room.send_message("**BLUE**: *%s*, %s" % (blue[0], ', '.join(blue[1:])))
 
 def recall():
     room.send_message("To view the current seed, click this link: %s" % submit_secret(seed))
@@ -289,6 +367,20 @@ def draw_grid(seed, solved):
     image1.save(output, format='png')
 
     return output.getvalue()
+
+def pin_red(msg):
+    global pinned_message_red
+    if pinned_message_red is not None:
+        pinned_message_red.cancel_stars()
+    msg.pin()
+    pinned_message_red = msg
+
+def pin_blue(msg):
+    global pinned_message_blue
+    if pinned_message_blue is not None:
+        pinned_message_blue.cancel_stars()
+    msg.pin()
+    pinned_message_blue = msg
 
 def upload_image(im):
     if imagehost == 'imgur':
