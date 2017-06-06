@@ -322,11 +322,16 @@ def get_board(seed):
 
 def draw_grid(seed, solved):
     WIDTH = 500
-    GRID_WIDTH = WIDTH / 5
-    HEIGHT = 300
-    GRID_HEIGHT = HEIGHT / 5
+    GRID_TOTAL_WIDTH = 500
+    GRID_WIDTH = GRID_TOTAL_WIDTH / 5
+    HEIGHT = 330
+    GRID_TOTAL_HEIGHT = 300
+    GRID_HEIGHT = GRID_TOTAL_HEIGHT / 5
+
+    y_offset = HEIGHT - GRID_TOTAL_HEIGHT
 
     font = ImageFont.truetype("ariblk.ttf", 12)
+    lfont = ImageFont.truetype("ariblk.ttf", 16)
     image1 = Image.new("RGB", (WIDTH, HEIGHT), (255, 255, 255) )
     draw = ImageDraw.Draw(image1)
     
@@ -337,7 +342,7 @@ def draw_grid(seed, solved):
         for y in xrange(5):
             if x*5+y in solved:
                 #print 'color: ', board[2][x*5+y]
-                draw.rectangle([x*GRID_WIDTH, y*GRID_HEIGHT, (x+1)*GRID_WIDTH, (y+1)*GRID_HEIGHT], fill=board[2][x*5+y])
+                draw.rectangle([x*GRID_WIDTH, y_offset + y*GRID_HEIGHT, (x+1)*GRID_WIDTH, y_offset + (y+1)*GRID_HEIGHT], fill=board[2][x*5+y])
                 if board[2][x*5+y]=="#00eeee":
                     blues+=1
                 if board[2][x*5+y]=="#ff0000":
@@ -352,20 +357,23 @@ def draw_grid(seed, solved):
     #I'm not 100% confident with the draw tools so somebody else can do them if they want
 
     for x in xrange(GRID_WIDTH, WIDTH, GRID_WIDTH):
-        draw.line([x, 0, x, HEIGHT], (0,0,0))
-    for y in xrange(GRID_HEIGHT, HEIGHT, GRID_HEIGHT):
-        draw.line([0, y, WIDTH, y], (0,0,0))
+        draw.line([x, y_offset, x, HEIGHT], (0,0,0))
+    for y in xrange(0, HEIGHT, GRID_HEIGHT):
+        draw.line([0, y + y_offset, GRID_TOTAL_WIDTH, y + y_offset], (0,0,0))
 
     for x in xrange(5):
         for y in xrange(5):
             word = board[1][x*5+y]
 
             size = draw.textsize(word, font=font)
-            draw.text((x * GRID_WIDTH + GRID_WIDTH/2 - size[0]/2, y * GRID_HEIGHT + GRID_HEIGHT/2 - size[1]/2), word, (0,0,0), font=font)
+            draw.text((x * GRID_WIDTH + GRID_WIDTH/2 - size[0]/2, y_offset + y * GRID_HEIGHT + GRID_HEIGHT/2 - size[1]/2), word, (0,0,0), font=font)
 
+    draw.text((70,1), "RED: %s remaining" % redsremaining, (255,0,0), font=lfont)
+    draw.text((270,1), "BLUE: %s remaining" % bluesremaining, (0,0,255), font=lfont)
+    
     output = StringIO.StringIO()
     image1.save(output, format='png')
-
+    
     return output.getvalue()
 
 def pin_red(msg):
