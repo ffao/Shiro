@@ -179,9 +179,9 @@ def new_game(msg):
 
         if players:
             if random.randrange(2):
-                blue.append(players[0])
-            else:
                 red.append(players[0])
+            else:
+                blue.append(players[0])
 
         room.send_message("**RED**: *%s*, %s" % (red[0], ', '.join(red[1:])))
         room.send_message("**BLUE**: *%s*, %s" % (blue[0], ', '.join(blue[1:])))
