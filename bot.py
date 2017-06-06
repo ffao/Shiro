@@ -74,7 +74,7 @@ def main():
     client.logout()
 
 passphrases = ["[passing]","[pass]"] #stuff that indicates somebody is passing
-TRUSTED_USER_IDS = [200996, 233269, 209507, 238144, 263999, 156773, 69330, 190748, 155240, 56166, 251910, 17335, 240387, 21351, 188759, 174589, 254945, 152262, 207333, 215298, 147578, 242914, 217429]
+TRUSTED_USER_IDS = [200996, 233269, 209507, 238144, 263999, 156773, 69330, 190748, 155240, 56166, 251910, 17335, 240387, 21351, 188759, 174589, 254945, 152262, 207333, 215298, 147578, 242914, 217429, 147578]
 
 def cooldown(seconds):
     def inner(fn):
@@ -124,6 +124,9 @@ def on_message(message, client):
 
         if is_trusted_user and message.content.lower().strip() == "!flipcoin":
             flip_coin()
+            
+        if is_trusted_user and message.content.lower().strip() == "!giveclue":
+            give_clue()
 
         if is_trusted_user and message.content.lower().strip() == "!recall":
             recall()
@@ -417,5 +420,13 @@ def submit_secret(secret):
     data = {'secret': secret}
     r = requests.post('https://onetimesecret.com/api/v1/share', data=data, auth=HTTPBasicAuth(OTS_User, OTS_Password))
     return 'https://onetimesecret.com/secret/' + r.json()['secret_key']
+
+def give_clue():
+    alphabet = list("abcdefghijklmnopqrstuvwxyz")
+    string_length = random.randint(3,10)
+    word = ""
+    for i in range(string_length):
+        word += alphabet[random.randint(0, 25)]
+    room.send_message("**" + word + ", " + str(random.randint(1, 9)) + "**")
 
 main()
