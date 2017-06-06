@@ -394,11 +394,12 @@ def pin_blue(msg):
     pinned_message_blue = msg
 
 def upload_image(im):
-    if imagehost == 'imgur':
-        return upload_imgur(im)
-
-    elif imagehost == 'puush':
-        return upload_puush(im)
+    if imagehost == 'puush':
+        try:
+            return upload_puush(im)
+        except:
+            print 'Failed to upload puush image! Falling back to imgur...'
+    return upload_imgur(im)
 
 def upload_imgur(im):
     data = urllib.urlencode([('image', im)])
