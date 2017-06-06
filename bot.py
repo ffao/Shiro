@@ -115,6 +115,9 @@ def on_message(message, client):
 
         if is_shiro and message.content.strip().startswith("<b>BLUE</b>:"):
             pin_blue(message.message) 
+            
+        if is_trusted_user and message.content.lower().strip() == "!teams":
+            show_teams()
 
         if is_trusted_user and message.content.lower().strip() == "!board":
             show_board()
@@ -417,5 +420,10 @@ def submit_secret(secret):
     data = {'secret': secret}
     r = requests.post('https://onetimesecret.com/api/v1/share', data=data, auth=HTTPBasicAuth(OTS_User, OTS_Password))
     return 'https://onetimesecret.com/secret/' + r.json()['secret_key']
+
+def show_teams():
+    global red,blue
+    room.send_message("**RED**: *%s*, %s" % (red[0], ', '.join(red[1:])))
+    room.send_message("**BLUE**: *%s*, %s" % (blue[0], ', '.join(blue[1:])))
 
 main()
