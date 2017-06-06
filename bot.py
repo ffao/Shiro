@@ -271,12 +271,12 @@ def remove_user(content, name):
     else:
         leaving_user = segments[1]
 
-    if name in red[1:]:
+    if leaving_user in red[1:]:
         red.reverse()
         red.remove(leaving_user)
         red.reverse()
         room.send_message("**RED**: *%s*, %s" % (red[0], ', '.join(red[1:])))
-    if name in blue[1:]:
+    if leaving_user in blue[1:]:
         blue.reverse()
         blue.remove(leaving_user)
         blue.reverse()
