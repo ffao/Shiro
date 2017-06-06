@@ -128,7 +128,7 @@ def on_message(message, client):
         if is_trusted_user and message.content.lower().strip() == "!recall":
             recall()
 
-        if is_trusted_user and message.content.lower().startswith("!join"):
+        if message.content.lower().startswith("!join"):
             add_user(message.content, message.user.name)
 
         if is_trusted_user and message.content.lower().startswith("!leave"):
