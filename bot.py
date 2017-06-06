@@ -131,7 +131,7 @@ def on_message(message, client):
         if message.content.lower().startswith("!join"):
             add_user(message.content, message.user.name)
 
-        if is_trusted_user and message.content.lower().startswith("!leave"):
+        if message.content.lower().startswith("!leave"):
             remove_user(message.content, message.user.name)
 
         if is_trusted_user and message.content.lower().startswith("!newgame"):
