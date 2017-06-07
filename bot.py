@@ -211,7 +211,8 @@ def new_game(msg):
         players = [x.strip() for x in msg[8:].split(",")]
     except Exception, e:
         return
-
+    temp_red = red
+    temp_blue = blue
     red = []
     blue = []
 
@@ -241,6 +242,9 @@ def new_game(msg):
         room.send_message("**RED**: *%s*, %s" % (red[0], ', '.join(red[1:])))
         room.send_message("**BLUE**: *%s*, %s" % (blue[0], ', '.join(blue[1:])))
         time.sleep(2)
+    else:
+        red = temp_red
+        blue = temp_blue
 
     seed = str(random.randint(1, 1000000000))
     print 'everything is done'
