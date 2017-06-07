@@ -14,6 +14,7 @@ import sys
 import os
 import time
 import puush
+import sqlite3
 
 import requests
 from requests.auth import HTTPBasicAuth
@@ -46,6 +47,7 @@ red = []
 def main():
     global room
     init('0')
+    init_whitelist()
 
     host_id = 'stackexchange.com'
     room_id = '59120'  # Sandbox
@@ -75,6 +77,35 @@ def main():
 
 passphrases = ["[passing]","[pass]"] #stuff that indicates somebody is passing
 TRUSTED_USER_IDS = [200996, 233269, 209507, 238144, 263999, 156773, 69330, 190748, 155240, 56166, 251910, 17335, 240387, 21351, 188759, 174589, 254945, 152262, 207333, 215298, 147578, 242914, 217429, 147578]
+
+def init_whitelist():
+    global TRUSTED_USER_IDS
+    db = sqlite3.connect('temp.db')
+    
+    results = db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='whitelist'");
+    if not results.fetchall():
+        db.execute('CREATE TABLE whitelist (ID int)')
+        db.commit()
+        db.close()
+
+        db = sqlite3.connect('temp.db', isolation_level=None)
+        db.executemany('INSERT INTO whitelist (ID) values (?)', [(x,) for x in TRUSTED_USER_IDS])
+        db.commit()
+    else:
+        results = db.execute("SELECT * FROM whitelist")
+        TRUSTED_USER_IDS = [x[0] for x in results.fetchall()]
+        print "TRUSTED: ", TRUSTED_USER_IDS
+
+    db.close()
+
+def add_whitelist(msg):
+    ID = int(msg.split(None, 1)[1])
+    TRUSTED_USER_IDS.append(ID)
+
+    db = sqlite3.connect('temp.db')
+    db.execute('INSERT INTO whitelist (ID) values (?)', (ID,))
+    db.commit()
+    db.close()
 
 def cooldown(seconds):
     def inner(fn):
@@ -136,6 +167,9 @@ def on_message(message, client):
 
         if is_trusted_user and message.content.lower().startswith("!newgame"):
             new_game(message.content)
+
+        if is_super_user and message.content.lower().startswith("!whitelist"):
+            add_whitelist(message.content)
         
         if is_trusted_user and message.content.lower().strip() == "!finalboard":
             show_final()
