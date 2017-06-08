@@ -132,7 +132,7 @@ def on_message(message, client):
     #print(">> (%s / %s) %s" % (message.user.name, repr(message.user.id), message.content))
 
     try:
-        pat = re.compile("\s*<b>(.*)</b>\s*", re.IGNORECASE)
+        pat = re.compile("<b>(.*)</b>", re.IGNORECASE)
         m = re.match(pat, message.content)
         if m is not None:
             guess = m.groups()[0].strip().lower()
