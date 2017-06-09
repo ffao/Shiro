@@ -423,7 +423,7 @@ def submit_secret(secret):
 
 def show_teams():
     global red,blue
-    room.send_message("**RED**: *%s*, %s" % (red[0], ', '.join(red[1:])))
-    room.send_message("**BLUE**: *%s*, %s" % (blue[0], ', '.join(blue[1:])))
+    room.send_message("**RED team**: *%s*, %s" % (red[0], ', '.join(red[1:])))
+    room.send_message("**BLUE team**: *%s*, %s" % (blue[0], ', '.join(blue[1:])))
 
 main()
