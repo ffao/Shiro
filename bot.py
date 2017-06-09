@@ -337,6 +337,7 @@ def show_board():
     time.sleep(3)
     room.send_message( upload_image(im) )
 
+@cooldown(10)
 def show_final():
     solved = range(25)
     '''Past code, in case this doesn't work for some reason:
