@@ -419,6 +419,7 @@ def draw_grid(seed, solved):
 
 def pin_red(msg):
     global pinned_message_red
+    time.sleep(3)
     if pinned_message_red is not None:
         pinned_message_red.cancel_stars()
     msg.pin()
@@ -426,6 +427,7 @@ def pin_red(msg):
 
 def pin_blue(msg):
     global pinned_message_blue
+    time.sleep(3)
     if pinned_message_blue is not None:
         pinned_message_blue.cancel_stars()
     msg.pin()
