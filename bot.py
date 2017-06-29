@@ -150,6 +150,9 @@ def on_message(message, client):
 
         if is_shiro and message.content.strip().startswith("<b>BLUE</b>:"):
             pin_blue(message.message) 
+            
+        if is_trusted_user and message.content.lower().strip() == "!teams":
+            show_teams()
 
         if is_trusted_user and message.content.lower().strip() == "!board":
             show_board()
@@ -341,6 +344,7 @@ def show_board():
     time.sleep(3)
     room.send_message( upload_image(im) )
 
+@cooldown(10)
 def show_final():
     solved = range(25)
     '''Past code, in case this doesn't work for some reason:
@@ -455,5 +459,10 @@ def submit_secret(secret):
     data = {'secret': secret}
     r = requests.post('https://onetimesecret.com/api/v1/share', data=data, auth=HTTPBasicAuth(OTS_User, OTS_Password))
     return 'https://onetimesecret.com/secret/' + r.json()['secret_key']
+
+def show_teams():
+    global red,blue
+    room.send_message("**RED team**: *%s*, %s" % (red[0], ', '.join(red[1:])))
+    room.send_message("**BLUE team**: *%s*, %s" % (blue[0], ', '.join(blue[1:])))
 
 main()
