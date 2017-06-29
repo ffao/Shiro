@@ -28,11 +28,15 @@ ctxt.enter()
 ctxt.eval(open("boardgen.js").read())
 shutdown = False
 
-OTS_User = 'zaroogous@safetymail.info'
+if 'OTS_User' in os.environ:
+    OTS_User = os.environ['OTS_User']
+else:
+    OTS_User = raw_input("OneTimeSecret User: ")
+
 if 'OTS_Password' in os.environ:
     OTS_Password = os.environ['OTS_Password']
 else:
-    OTS_Password = raw_input("OTS Password: ")
+    OTS_Password = raw_input("OneTimeSecret Password: ")
 
 if 'Puush_API_Key' in os.environ:
     Puush_API_Key = os.environ['Puush_API_Key']
