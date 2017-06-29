@@ -36,7 +36,7 @@ else:
 if 'OTS_Password' in os.environ:
     OTS_Password = os.environ['OTS_Password']
 else:
-    OTS_Password = raw_input("OneTimeSecret Password: ")
+    OTS_Password = raw_input("OneTimeSecret API Key: ")
 
 if 'Puush_API_Key' in os.environ:
     Puush_API_Key = os.environ['Puush_API_Key']
