@@ -141,7 +141,6 @@ def on_message(message, client):
     #print(">> (%s / %s) %s" % (message.user.name, repr(message.user.id), message.content))
 
     try:
-        raise RuntimeError("hi")
         pat = re.compile("\s*<b>(.*)</b>\s*", re.IGNORECASE)
         m = re.match(pat, message.content)
         if m is not None:
@@ -431,14 +430,22 @@ def draw_grid(seed, solved):
 def pin_red(msg):
     global pinned_message_red
     if pinned_message_red is not None:
-        pinned_message_red.cancel_stars()
+        try:
+            pinned_message_red._client._br.edit_message(pinned_message_red.id, msg.content)
+            return
+        except:
+            pinned_message_red.cancel_stars()
     msg.pin()
     pinned_message_red = msg
 
 def pin_blue(msg):
     global pinned_message_blue
     if pinned_message_blue is not None:
-        pinned_message_blue.cancel_stars()
+        try:
+            pinned_message_blue._client._br.edit_message(pinned_message_blue.id, msg.content)
+            return
+        except:
+            pinned_message_blue.cancel_stars()
     msg.pin()
     pinned_message_blue = msg
 
