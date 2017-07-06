@@ -6,6 +6,10 @@ __pycache__/
 # Database files
 *.db
 
+# Log files
+nocrashlog.txt
+errorLogs.txt
+
 # C extensions
 *.so
 

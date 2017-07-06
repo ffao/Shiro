@@ -1,3 +1,8 @@
+from excepthook import uncaught_exception, install_thread_excepthook
+import sys
+sys.excepthook = uncaught_exception
+install_thread_excepthook()
+
 import PyV8
 import getpass
 from PIL import Image, ImageDraw, ImageFont
@@ -7,10 +12,8 @@ import json
 import random
 import traceback
 
-import ChatExchange.chatexchange.client
-import ChatExchange.chatexchange.events
+from ChatExchange import chatexchange
 import re
-import sys
 import os
 import time
 import puush
@@ -18,6 +21,7 @@ import sqlite3
 
 import requests
 from requests.auth import HTTPBasicAuth
+from helpers import log, log_exception
 
 imagehost = 'puush'
 
@@ -49,7 +53,7 @@ blue = []
 red = []
 
 def main():
-    global room
+    global room, my_user
     init('0')
     init_whitelist()
 
@@ -67,12 +71,13 @@ def main():
 
     client = chatexchange.client.Client(host_id)
     client.login(email, password)
+    my_user = client.get_me()
 
     room = client.get_room(room_id)
     room.join()
     room.watch(on_message)
 
-    print("(You are now in room #%s on %s.)" % (room_id, host_id))
+    log('info', "(You are now in room #%s on %s.)" % (room_id, host_id))
     while not shutdown:
         message = raw_input("<< ")
         room.send_message(message)
@@ -98,7 +103,7 @@ def init_whitelist():
     else:
         results = db.execute("SELECT * FROM whitelist")
         TRUSTED_USER_IDS = [x[0] for x in results.fetchall()]
-        print "TRUSTED: ", TRUSTED_USER_IDS
+        log('debug', "TRUSTED: " + str(TRUSTED_USER_IDS))
 
     db.close()
 
@@ -128,14 +133,15 @@ def on_message(message, client):
         # Ignore non-message_posted events.
         return
 
-    is_shiro = (message.user.id == 285026)
-    is_super_user = (message.user.id == 200996 or message.user.is_moderator)
-    is_trusted_user = (message.user.id in TRUSTED_USER_IDS or is_super_user)
+    is_shiro = (message.user.id == my_user.id)
+    is_super_user = (is_shiro or message.user.id == 200996 or message.user.is_moderator)
+    is_trusted_user = (is_super_user or message.user.id in TRUSTED_USER_IDS)
 
     #print("")
     #print(">> (%s / %s) %s" % (message.user.name, repr(message.user.id), message.content))
 
     try:
+        raise RuntimeError("hi")
         pat = re.compile("\s*<b>(.*)</b>\s*", re.IGNORECASE)
         m = re.match(pat, message.content)
         if m is not None:
@@ -196,8 +202,9 @@ def on_message(message, client):
             shutdown = True
 
     except:
-        traceback.print_exc()
-        print ""
+        log_exception(*sys.exc_info())
+        #traceback.print_exc()
+        #print ""
 
 def flip_coin():
     room.send_message(random.choice(["Red", "Blue"]))
@@ -222,8 +229,9 @@ def new_game(msg):
     red = []
     blue = []
 
-    print "players: ", players
-    if players is not None and len(players) >= 4:
+    log('info', 'New game is starting!')
+    log('debug', "players: {}".format(players))
+    if players is not None and len(players) >= 2:
         spymasters = players[:2]
         random.shuffle(spymasters)
 
@@ -250,7 +258,6 @@ def new_game(msg):
         time.sleep(2)
 
     seed = str(random.randint(1, 1000000000))
-    print 'everything is done'
 
     my_message = '''RED spymaster only, please click on this link to see the seed: %s
 BLUE spymaster only, please click on this link to see the seed: %s
