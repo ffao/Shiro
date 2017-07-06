@@ -7,8 +7,8 @@ import json
 import random
 import traceback
 
-import chatexchange.client
-import chatexchange.events
+import ChatExchange.chatexchange.client
+import ChatExchange.chatexchange.events
 import re
 import sys
 import os
