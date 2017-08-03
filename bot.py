@@ -81,8 +81,7 @@ def main():
     log('info', "(You are now in room #%s on %s.)" % (room_id, host_id))
     while not shutdown:
         message = raw_input("<< ")
-        room.send_message(message)
-
+        
     client.logout()
 
 passphrases = ["[passing]","[pass]"] #stuff that indicates somebody is passing
@@ -138,8 +137,10 @@ def add_whitelist(msg):
     db.commit()
     db.close()
 
-def add_pinglist(msg):
-    name = msg.split(None, 1)[1]
+def add_pinglist(msg, name=None):
+    if name is None:
+    	name = msg.split(None, 1)[1]
+    room.send_message("Adding {} to the pinglist.".format(name))
     PING_NAMES.append(name)
 
     db = sqlite3.connect('temp.db')
@@ -147,8 +148,10 @@ def add_pinglist(msg):
     db.commit()
     db.close()
 
-def remove_pinglist(msg):
-    name = msg.split(None, 1)[1]
+def remove_pinglist(msg, name=None):
+    if name is None:
+    	name = msg.split(None, 1)[1]
+    room.send_message("Removing {} from the pinglist.".format(name))
     PING_NAMES.remove(name)
 
     db = sqlite3.connect('temp.db')
@@ -243,11 +246,18 @@ def on_message(message, client):
         if is_super_user and message.content.lower().strip() == "!ping":
             ping()
 
-        if is_super_user and message.content.lower().startswith("!pingable"):
+        if is_trusted_user and message.content.lower().strip() == "!pingable":
+        	add_pinglist(message.content, message.user.name.replace(" ", ""))
+        elif is_super_user and message.content.lower().startswith("!pingable"):
             add_pinglist(message.content)
 
-        if is_super_user and message.content.lower().startswith("!notpingable"):
+        if is_trusted_user and message.content.lower().strip() == "!notpingable":
+        	remove_pinglist(message.content, message.user.name.replace(" ", ""))
+        elif is_super_user and message.content.lower().startswith("!notpingable"):
             remove_pinglist(message.content)
+
+        if is_trusted_user and message.content.lower().startswith("!pinglist"):
+            pinglist()
 
     except:
         log_exception(*sys.exc_info())
@@ -402,6 +412,10 @@ def show_board():
 @cooldown(10)
 def ping():
     room.send_message( " ".join('@'+x for x in PING_NAMES) )
+
+@cooldown(10)
+def pinglist():
+    room.send_message( " ".join(x for x in PING_NAMES) )
 
 @cooldown(10)
 def show_final():
