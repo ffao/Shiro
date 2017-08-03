@@ -182,6 +182,9 @@ def on_message(message, client):
 
         if is_super_user and message.content.lower().startswith("!whitelist"):
             add_whitelist(message.content)
+                    
+        if is_super_user and message.content.lower().startswith("!ping"):
+            ping()
         
         if is_trusted_user and message.content.lower().strip() == "!finalboard":
             show_final()
@@ -331,6 +334,9 @@ def remove_user(content, name):
 
 def recall():
     room.send_message("To view the current seed, click this link: %s" % submit_secret(seed))
+    
+def ping():
+    room.send_message("The ping command has not been implemented yet. To see the list of people who have requested to be pinged, please see https://docs.google.com/document/d/1HiEjKXeJbYyWyU3oMYlsa4nnKiHwbtkoyEqEvAViu3A/edit.)
 
 def init(_seed):
     global seed, guessed, board
