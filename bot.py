@@ -56,6 +56,7 @@ def main():
     global room, my_user
     init('0')
     init_whitelist()
+    init_pinglist()
 
     host_id = 'stackexchange.com'
     room_id = '59120'  # Sandbox
@@ -86,6 +87,7 @@ def main():
 
 passphrases = ["[passing]","[pass]"] #stuff that indicates somebody is passing
 TRUSTED_USER_IDS = [200996, 233269, 209507, 238144, 263999, 156773, 69330, 190748, 155240, 56166, 251910, 17335, 240387, 21351, 188759, 174589, 254945, 152262, 207333, 215298, 147578, 242914, 217429, 147578]
+PING_NAMES = ['ffao']
 
 def init_whitelist():
     global TRUSTED_USER_IDS
@@ -107,12 +109,50 @@ def init_whitelist():
 
     db.close()
 
+def init_pinglist():
+    global PING_NAMES
+    db = sqlite3.connect('temp.db')
+    
+    results = db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='pinglist'");
+    if not results.fetchall():
+        db.execute('CREATE TABLE pinglist (name text)')
+        db.commit()
+        db.close()
+
+        db = sqlite3.connect('temp.db', isolation_level=None)
+        db.executemany('INSERT INTO pinglist (name) values (?)', [(x,) for x in PING_NAMES])
+        db.commit()
+    else:
+        results = db.execute("SELECT * FROM pinglist")
+        PING_NAMES = [x[0] for x in results.fetchall()]
+        log('debug', "PINGABLE: " + str(PING_NAMES))
+
+    db.close()
+
 def add_whitelist(msg):
     ID = int(msg.split(None, 1)[1])
     TRUSTED_USER_IDS.append(ID)
 
     db = sqlite3.connect('temp.db')
     db.execute('INSERT INTO whitelist (ID) values (?)', (ID,))
+    db.commit()
+    db.close()
+
+def add_pinglist(msg):
+    name = msg.split(None, 1)[1]
+    PING_NAMES.append(name)
+
+    db = sqlite3.connect('temp.db')
+    db.execute('INSERT INTO pinglist (name) values (?)', (name,))
+    db.commit()
+    db.close()
+
+def remove_pinglist(msg):
+    name = msg.split(None, 1)[1]
+    PING_NAMES.remove(name)
+
+    db = sqlite3.connect('temp.db')
+    db.execute('DELETE FROM pinglist WHERE name = ?', (name,))
     db.commit()
     db.close()
 
@@ -199,6 +239,15 @@ def on_message(message, client):
 
         if is_super_user and message.content.lower().strip() == "!shutdown":
             shutdown = True
+
+        if is_super_user and message.content.lower().strip() == "!ping":
+            ping()
+
+        if is_super_user and message.content.lower().startswith("!pingable"):
+            add_pinglist(message.content)
+
+        if is_super_user and message.content.lower().startswith("!notpingable"):
+            remove_pinglist(message.content)
 
     except:
         log_exception(*sys.exc_info())
@@ -349,6 +398,10 @@ def show_board():
     print 'sending message'
     time.sleep(3)
     room.send_message( upload_image(im) )
+
+@cooldown(10)
+def ping():
+    room.send_message( " ".join('@'+x for x in PING_NAMES) )
 
 @cooldown(10)
 def show_final():
