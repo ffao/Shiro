@@ -11,6 +11,9 @@ import urllib2, urllib
 import json
 import random
 import traceback
+import HTMLParser
+
+unescape = HTMLParser.HTMLParser().unescape
 
 from ChatExchange import chatexchange
 import re
@@ -139,7 +142,7 @@ def add_whitelist(msg):
 
 def add_pinglist(msg, name=None):
     if name is None:
-    	name = msg.split(None, 1)[1]
+    	name = unescape(msg.split(None, 1)[1]).strip()
     room.send_message("Adding {} to the pinglist.".format(name))
     PING_NAMES.append(name)
 
@@ -150,7 +153,7 @@ def add_pinglist(msg, name=None):
 
 def remove_pinglist(msg, name=None):
     if name is None:
-    	name = msg.split(None, 1)[1]
+    	name = unescape(msg.split(None, 1)[1]).strip()
     room.send_message("Removing {} from the pinglist.".format(name))
     PING_NAMES.remove(name)
 
@@ -280,7 +283,7 @@ def new_game(msg):
     players = None
 
     try:
-        players = [x.strip() for x in msg[8:].split(",")]
+        players = [unescape(x).strip() for x in msg[8:].split(",")]
     except Exception, e:
         return
 
@@ -343,7 +346,7 @@ def add_user(content, name):
     if len(segments) == 1:
         joining_user = name
     else:
-        joining_user = segments[1]
+        joining_user = unescape(segments[1]).strip()
 
     dest_color = ''
     if content.lower().strip().startswith("!joinred"):
@@ -375,7 +378,7 @@ def remove_user(content, name):
     if len(segments) == 1:
         leaving_user = name
     else:
-        leaving_user = segments[1]
+        leaving_user = unescape(segments[1]).strip()
 
     if leaving_user in red[1:]:
         red.reverse()
