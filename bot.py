@@ -270,12 +270,10 @@ def on_message(message, client):
         #traceback.print_exc()
         #print ""
 
-def 
-flip_coin():
+def flip_coin():
     room.send_message(random.choice(["Red", "Blue"]))
     
-def 
-blame():
+def blame():
     room.send_message(random.choice(["It's [Mithrandir](https://chat.stackexchange.com/users/133031)'s fault.", "It's [n_palum](https://chat.stackexchange.com/users/263999)'s fault."]))
 
 def change_host(msg):
