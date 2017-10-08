@@ -216,6 +216,9 @@ def on_message(message, client):
             
         if is_trusted_user and message.content.lower().strip() == "!blame":
             blame()
+            
+        if message.content.lower().strip() == "!help":
+            info()
 
         if is_trusted_user and message.content.lower().strip() == "!recall":
             recall()
@@ -275,6 +278,10 @@ def flip_coin():
     
 def blame():
     room.send_message(random.choice(["It's [Mithrandir](https://chat.stackexchange.com/users/133031)'s fault.", "It's [n_palum](https://chat.stackexchange.com/users/263999)'s fault."]))
+    
+    
+def info():
+    room.send_message(Hello! I'm Shiro, a bot to help with the game Codenames. To see the rules and a list of commands that you can see, see [this answer on Puzzling Meta](https://puzzling.meta.stackexchange.com/a/5989). Have fun!)
 
 def change_host(msg):
     global imagehost
