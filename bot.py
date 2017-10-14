@@ -281,7 +281,7 @@ def blame():
     
     
 def info():
-    room.send_message(Hello! I'm Shiro, a bot to help with the game Codenames. To see the rules and a list of commands that you can see, see [this answer on Puzzling Meta](https://puzzling.meta.stackexchange.com/a/5989). Have fun!)
+    room.send_message("Hello! I'm Shiro, a bot to help with the game Codenames. To see the rules and a list of commands that you can use, see [this answer on Puzzling Meta](https://puzzling.meta.stackexchange.com/a/5989). Have fun!")
 
 def change_host(msg):
     global imagehost
