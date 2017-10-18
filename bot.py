@@ -251,6 +251,9 @@ def on_message(message, client):
 
         if is_super_user and message.content.lower().strip() == "!ping":
             ping()
+            
+        if message.content.lower().strip() == "!help":
+            info()
 
         if is_trusted_user and message.content.lower().strip() == "!pingable":
         	add_pinglist(message.content, message.user.name.replace(" ", ""))
@@ -283,6 +286,9 @@ def change_host(msg):
     if len(pieces) >= 2:
         new_host = pieces[1].strip()
         if new_host in ['imgur', 'puush']: imagehost = new_host
+            
+def info():
+    room.send_message("Hello! I'm Shiro, a bot to help with the game Codenames. To see the rules and a list of commands that you can use, see [this answer on Puzzling Meta](https://puzzling.meta.stackexchange.com/a/5989). Have fun!")
 
 def new_game(msg):
     global red, blue
