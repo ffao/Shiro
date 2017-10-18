@@ -220,11 +220,15 @@ def on_message(message, client):
         if is_trusted_user and message.content.lower().strip() == "!recall":
             recall()
 
-        if message.content.lower().startswith("!join"):
+        if is_trusted_user and message.content.lower().startswith("!join"):
             add_user(message.content, message.user.name)
+        elif message.content.lower().strip() == "!join":
+        	add_user(message.content, message.user.name)
 
-        if message.content.lower().startswith("!leave"):
+        if is_trusted_user and message.content.lower().startswith("!leave"):
             remove_user(message.content, message.user.name)
+        elif message.content.lower().strip() == "!leave":
+        	remove_user(message.content, message.user.name)
 
         if is_trusted_user and message.content.lower().startswith("!newgame"):
             new_game(message.content)
