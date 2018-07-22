@@ -3,7 +3,7 @@ import sys
 sys.excepthook = uncaught_exception
 install_thread_excepthook()
 
-import PyV8
+import boardgen
 import getpass
 from PIL import Image, ImageDraw, ImageFont
 import StringIO
@@ -30,9 +30,6 @@ imagehost = 'puush'
 
 guessed = []
 board = []
-ctxt = PyV8.JSContext()
-ctxt.enter()
-ctxt.eval(open("boardgen.js").read())
 shutdown = False
 
 if 'OTS_User' in os.environ:
@@ -451,8 +448,7 @@ def show_final():
     room.send_message( upload_image(im) )
 
 def get_board(seed):
-    ctxt.locals.obtainedseed = seed
-    board = ctxt.eval("createNewGame(obtainedseed);").split(',')
+    board = boardgen.createNewGame(obtainedseed).split(',')
     
     print board
     return board[0], board[1:26], board[26:51]
