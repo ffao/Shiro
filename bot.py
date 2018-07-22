@@ -448,7 +448,7 @@ def show_final():
     room.send_message( upload_image(im) )
 
 def get_board(seed):
-    board = boardgen.createNewGame(obtainedseed).split(',')
+    board = boardgen.createNewGame(seed).split(',')
     
     print board
     return board[0], board[1:26], board[26:51]
