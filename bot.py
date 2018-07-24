@@ -31,6 +31,8 @@ imagehost = 'puush'
 guessed = []
 board = []
 shutdown = False
+whose_turn = "None"
+num_guesses = 0
 
 if 'OTS_User' in os.environ:
     OTS_User = os.environ['OTS_User']
@@ -59,7 +61,7 @@ def main():
     init_pinglist()
 
     host_id = 'stackexchange.com'
-    room_id = '59120'  # Sandbox
+    room_id = '59120'  # Codenames
 
     if 'ChatExchangeU' in os.environ:
         email = os.environ['ChatExchangeU']
@@ -139,7 +141,7 @@ def add_whitelist(msg):
 
 def add_pinglist(msg, name=None):
     if name is None:
-    	name = unescape(msg.split(None, 1)[1]).strip()
+        name = unescape(msg.split(None, 1)[1]).strip()
     room.send_message("Adding {} to the pinglist.".format(name))
     PING_NAMES.append(name)
 
@@ -150,7 +152,7 @@ def add_pinglist(msg, name=None):
 
 def remove_pinglist(msg, name=None):
     if name is None:
-    	name = unescape(msg.split(None, 1)[1]).strip()
+        name = unescape(msg.split(None, 1)[1]).strip()
     room.send_message("Removing {} from the pinglist.".format(name))
     PING_NAMES.remove(name)
 
@@ -171,7 +173,7 @@ def cooldown(seconds):
     return inner
 
 def on_message(message, client):
-    global shutdown
+    global shutdown, whose_turn, num_guesses, red, blue
     if not isinstance(message, chatexchange.events.MessagePosted):
         # Ignore non-message_posted events.
         return
@@ -184,15 +186,31 @@ def on_message(message, client):
     #print(">> (%s / %s) %s" % (message.user.name, repr(message.user.id), message.content))
 
     try:
-        pat = re.compile("\s*<b>(.*)</b>\s*", re.IGNORECASE)
-        m = re.match(pat, message.content)
-        if m is not None:
-            guess = m.groups()[0].strip().lower()
+        clue_pattern = re.compile(r"(?:Red|Blue): <b>.+\s*\((\d+|unlimited|\u221e)\)</b>", re.IGNORECASE) #Strange things happening with this pattern
+        clue_match = re.match(clue_pattern, message.content)
+
+        if not is_shiro and clue_match is not None and ((whose_turn == "SMRed" and message.user.name == red[0]) or (whose_turn == "SMBlue" and message.user.name in blue[0])):
+            clue = clue_match.groups()[0].strip().lower()
+            #print("Matched clue: %s" % (clue))
+            if clue.isdigit() and int(clue) > 0:
+                num_guesses = int(clue) + 1
+            else:
+                num_guesses = 100
+            toggle_turn()
+
+        #print("num guesses: %s" % (num_guesses))
+            
+        pat = re.compile(r"\s*<b>(.*)</b>\s*", re.IGNORECASE)
+        guess_match = re.match(pat, message.content)
+
+        if not is_shiro and guess_match is not None and ((whose_turn == "Red" and message.user.name in red[1:]) or (whose_turn == "Blue" and message.user.name in blue[1:])):
+            guess = guess_match.groups()[0].strip().lower()
             if guess in passphrases:
                 show_board()
+                toggle_turn()
             else:
-                guessed.append( guess )
-
+                process_guess(guess.upper())
+                
         if is_shiro and message.content.strip().startswith("<b>RED</b>:"):
             pin_red(message.message)
 
@@ -204,9 +222,6 @@ def on_message(message, client):
 
         if is_trusted_user and message.content.lower().strip() == "!board":
             show_board()
-
-        if is_trusted_user and message.content.lower().strip() == "!undo":
-            guessed.pop()
 
         if is_trusted_user and message.content.lower().strip() == "!flipcoin":
             flip_coin()
@@ -220,12 +235,12 @@ def on_message(message, client):
         if is_trusted_user and message.content.lower().startswith("!join"):
             add_user(message.content, message.user.name)
         elif message.content.lower().strip() == "!join":
-        	add_user(message.content, message.user.name)
+            add_user(message.content, message.user.name)
 
         if is_trusted_user and message.content.lower().startswith("!leave"):
             remove_user(message.content, message.user.name)
         elif message.content.lower().strip() == "!leave":
-        	remove_user(message.content, message.user.name)
+            remove_user(message.content, message.user.name)
 
         if is_trusted_user and message.content.lower().startswith("!newgame"):
             new_game(message.content)
@@ -257,28 +272,90 @@ def on_message(message, client):
             info()
 
         if is_trusted_user and message.content.lower().strip() == "!pingable":
-        	add_pinglist(message.content, message.user.name.replace(" ", ""))
+            add_pinglist(message.content, message.user.name.replace(" ", ""))
         elif is_super_user and message.content.lower().startswith("!pingable"):
             add_pinglist(message.content)
 
         if is_trusted_user and message.content.lower().strip() == "!notpingable":
-        	remove_pinglist(message.content, message.user.name.replace(" ", ""))
+            remove_pinglist(message.content, message.user.name.replace(" ", ""))
         elif is_super_user and message.content.lower().startswith("!notpingable"):
             remove_pinglist(message.content)
 
         if is_trusted_user and message.content.lower().startswith("!pinglist"):
             pinglist()
 
+        if is_trusted_user and (message.content.lower().startswith("!who") or message.content.lower().strip() == "!guesses"):
+            #print(whose_turn)
+            if whose_turn == "Red" or whose_turn == "Blue":
+                room.send_message("%s currently has %s guesses remaining." % (whose_turn, num_guesses if num_guesses < 25 else "unlimited"))
+            elif whose_turn[:2] == "SM":
+                room.send_message("We are currently waiting for a clue from the %s spymaster." % (whose_turn[2:]))
+
     except:
         log_exception(*sys.exc_info())
         #traceback.print_exc()
         #print ""
 
+def process_guess(guess):
+    global whose_turn, num_guesses
+    condolences = ["Oh, dear.\n", "That's too bad.\n", "I feel for you.\n", "What were you thinking?\n", "Uh... what?\n", "Maybe you'll do better next time.\n", "Seriously?\n", "I hope you feel okay about that.\n", "When will you learn?\n"]
+    if guess in board[1]:
+        guessed.append( guess.lower() )
+        message = guess
+        new_turn = False
+        guess_color = board[2][board[1].index(guess)]
+        if guess_color == "#00eeee":
+            message += " is Blue\n"
+            if whose_turn == "Red":
+                new_turn = True
+                message += random.choice(condolences)
+            elif whose_turn == "Blue":
+                num_guesses -= 1
+                if num_guesses == 0:
+                    message += "You are out of guesses. "
+                    new_turn = True
+        elif guess_color == "#ff0000":
+            message += " is Red\n"
+            if whose_turn == "Blue":
+                new_turn = True
+                message += random.choice(condolences)
+            elif whose_turn == "Red":
+                num_guesses -= 1
+                if num_guesses == 0:
+                    message += "You are out of guesses. "
+                    new_turn = True
+        elif guess_color == "#ffff00":
+            message += " is Yellow (neutral)\n"
+            new_turn = True
+        elif guess_color == "#808080":
+            message += " is Black (assassin!).\nGame over. "
+            if whose_turn == "Blue":
+                message += "Red wins!"
+            elif whose_turn == "Red":
+                message += "Blue wins!"
+            show_final()
+        
+        if new_turn:
+            if whose_turn == "Blue":
+                message += "It is now Red's turn"
+            elif whose_turn == "Red":
+                message += "It is now Blue's turn"
+            toggle_turn()
+            
+        room.send_message(message)
+        if new_turn:
+            show_board()
+        
+    else:
+        room.send_message("%s doesn't appear to be on the board..." % (guess.upper()))
+
+        
 def flip_coin():
     room.send_message(random.choice(["Red", "Blue"]))
     
 def blame():
-    room.send_message(random.choice(["It's [Mithrandir](https://chat.stackexchange.com/users/133031)'s fault.", "It's [n_palum](https://chat.stackexchange.com/users/263999)'s fault."]))
+    global red, blue
+    room.send_message("It's %s's fault." % (random.choice(red + blue)))
 
 def change_host(msg):
     global imagehost
@@ -292,7 +369,7 @@ def info():
     room.send_message("Hello! I'm Shiro, a bot to help with the game Codenames. To see the rules and a list of commands that you can use, see [this answer on Puzzling Meta](https://puzzling.meta.stackexchange.com/a/5989). Have fun!")
 
 def new_game(msg):
-    global red, blue
+    global red, blue, whose_turn
     players = None
 
     try:
@@ -343,8 +420,10 @@ Please save the seed somewhere! As a last resort if any of you happens to forget
     init(seed)
     if board[0]=="#00eeee":
         room.send_message("BLUE goes first!")
+        whose_turn = "SMBlue"
     elif board[0]=="#ff0000":
         room.send_message("RED goes first!")
+        whose_turn = "SMRed"
     show_board()
 
 
@@ -560,5 +639,18 @@ def show_teams():
     global red,blue
     room.send_message("**RED team**: *%s*, %s" % (red[0], ', '.join(red[1:])))
     room.send_message("**BLUE team**: *%s*, %s" % (blue[0], ', '.join(blue[1:])))
+
+def toggle_turn():
+    global whose_turn
+    if whose_turn == "Blue":
+        whose_turn = "SMRed"
+        num_guesses = 0
+    elif whose_turn == "SMRed":
+        whose_turn = "Red"
+    elif whose_turn == "Red":
+        whose_turn = "SMBlue"
+        num_guesses = 0
+    elif whose_turn == "SMBlue":
+        whose_turn = "Blue"
 
 main()
