@@ -189,7 +189,7 @@ def on_message(message, client):
         clue_pattern = re.compile(r"(?:Red|Blue): <b>.+\s*\((\d+|unlimited|\u221e)\)</b>", re.IGNORECASE) #Strange things happening with this pattern
         clue_match = re.match(clue_pattern, message.content)
 
-        if not is_shiro and clue_match is not None and ((whose_turn == "SMRed" and message.user.name == red[0]) or (whose_turn == "SMBlue" and message.user.name in blue[0])):
+        if not is_shiro and clue_match is not None and ((whose_turn == "SMRed" and message.user.name == red[0]) or (whose_turn == "SMBlue" and message.user.name == blue[0])):
             clue = clue_match.groups()[0].strip().lower()
             #print("Matched clue: %s" % (clue))
             if clue.isdigit() and int(clue) > 0:
