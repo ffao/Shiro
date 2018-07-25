@@ -303,6 +303,7 @@ def process_guess(guess):
         guessed.append( guess.lower() )
         message = guess
         new_turn = False
+        game_over = False
         guess_color = board[2][board[1].index(guess)]
         if guess_color == "#00eeee":
             message += " is Blue\n"
@@ -333,7 +334,7 @@ def process_guess(guess):
                 message += "Red wins!"
             elif whose_turn == "Red":
                 message += "Blue wins!"
-            show_final()
+            game_over = True
         
         if new_turn:
             if whose_turn == "Blue":
@@ -345,6 +346,8 @@ def process_guess(guess):
         room.send_message(message)
         if new_turn:
             show_board()
+        if game_over:
+            show_final()
         
     else:
         room.send_message("%s doesn't appear to be on the board..." % (guess.upper()))
@@ -354,7 +357,6 @@ def flip_coin():
     room.send_message(random.choice(["Red", "Blue"]))
     
 def blame():
-    global red, blue
     room.send_message("It's %s's fault." % (random.choice(red + blue)))
 
 def change_host(msg):
@@ -368,6 +370,7 @@ def change_host(msg):
 def info():
     room.send_message("Hello! I'm Shiro, a bot to help with the game Codenames. To see the rules and a list of commands that you can use, see [this answer on Puzzling Meta](https://puzzling.meta.stackexchange.com/a/5989). Have fun!")
 
+@cooldown(5)
 def new_game(msg):
     global red, blue, whose_turn
     players = None
