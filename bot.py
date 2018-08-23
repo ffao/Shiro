@@ -186,7 +186,7 @@ def on_message(message, client):
     #print(">> (%s / %s) %s" % (message.user.name, repr(message.user.id), message.content))
 
     try:
-        clue_pattern = re.compile(r"(?:Red|Blue): <b>.+\s*\((\d+|unlimited|\u221e)\)</b>", re.IGNORECASE) #Strange things happening with this pattern
+        clue_pattern = re.compile(r"(?:Red|Blue): <b>.+(?:</b>)?\s*\((\d+|unlimited|\u221e)\)(?:</b>)?", re.IGNORECASE) #Strange things happening with this pattern
         clue_match = re.match(clue_pattern, message.content)
 
         if not is_shiro and clue_match is not None and ((whose_turn == "SMRed" and message.user.name == red[0]) or (whose_turn == "SMBlue" and message.user.name == blue[0])):
