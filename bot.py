@@ -509,7 +509,8 @@ def show_board():
 
 @cooldown(10)
 def ping():
-    room.send_message( " ".join('@'+x for x in PING_NAMES) )
+    for x in range(0, len(PING_NAMES), 10):
+        room.send_message( " ".join('@'+x for x in PING_NAMES[x:x+10]) )
 
 @cooldown(10)
 def pinglist():
