@@ -594,6 +594,7 @@ def draw_grid(seed, solved):
 
 def pin_red(msg):
     global pinned_message_red
+    time.sleep(3)
     if pinned_message_red is not None:
         try:
             pinned_message_red._client._br.edit_message(pinned_message_red.id, "**RED**: *%s*, %s" % (red[0], ', '.join(red[1:])))
@@ -605,6 +606,7 @@ def pin_red(msg):
 
 def pin_blue(msg):
     global pinned_message_blue
+    time.sleep(3)
     if pinned_message_blue is not None:
         try:
             pinned_message_blue._client._br.edit_message(pinned_message_blue.id, "**BLUE**: *%s*, %s" % (blue[0], ', '.join(blue[1:])))
