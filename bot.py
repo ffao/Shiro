@@ -299,7 +299,9 @@ def on_message(message, client):
 def process_guess(guess):
     global whose_turn, num_guesses
     condolences = ["Oh, dear.\n", "That's too bad.\n", "I feel for you.\n", "What were you thinking?\n", "Uh... what?\n", "Maybe you'll do better next time.\n", "Seriously?\n", "I hope you feel okay about that.\n", "When will you learn?\n"]
-    if guess in board[1]:
+    if guess.lower() in guessed:
+        room.send_message("%s has already been guessed." % (guess.upper()))
+    elif guess in board[1]:
         guessed.append( guess.lower() )
         message = guess
         new_turn = False
