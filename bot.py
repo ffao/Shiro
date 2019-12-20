@@ -393,6 +393,8 @@ def new_game(msg):
         blue = [spymasters[1]]
 
         players = players[2:]
+        pings = list(players)
+        
         n = len(players) / 2
         for x in xrange(n):
             who = random.randrange(len(players))
@@ -409,6 +411,8 @@ def new_game(msg):
 
         room.send_message("**RED**: *%s*, %s" % (red[0], ', '.join(red[1:])))
         room.send_message("**BLUE**: *%s*, %s" % (blue[0], ', '.join(blue[1:])))
+        room.send_message(' '.join(map(lambda x: "@" + x, pings)))
+        
         time.sleep(2)
 
     seed = str(random.randint(1, 1000000000))
